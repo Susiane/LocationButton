@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -15,6 +16,9 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -56,22 +60,24 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if(servicesOK()){
+        if (servicesOK()) {
             setContentView(R.layout.activity_map);
 
-            if(initMap()){
-                gotoLocation(SEATTLE_LAT,SEATTLE_LNG, 15);
+            if (initMap()) {
+                gotoLocation(SEATTLE_LAT, SEATTLE_LNG, 15);
 
+                // ATTENTION: This "addApi(AppIndex.API)"was auto-generated to implement the App Indexing API.
+                // See https://g.co/AppIndexing/AndroidStudio for more information.
                 mLocationClient = new GoogleApiClient.Builder(this)
                         .addApi(LocationServices.API)
                         .addConnectionCallbacks(this)
                         .addOnConnectionFailedListener(this)
-                        .build();
+                        .addApi(AppIndex.API).build();
                 mLocationClient.connect();
-            } else{
-                Toast.makeText(this, "Map not connected!",Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Map not connected!", Toast.LENGTH_SHORT).show();
             }
-        }else{
+        } else {
             setContentView(R.layout.activity_main);
         }
     }
@@ -122,6 +128,32 @@ public class MainActivity extends AppCompatActivity
                     }
                 });
 
+                mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+                    @Override
+                    public void onMapLongClick(LatLng latLng) {
+                        Geocoder gc = new Geocoder(MainActivity.this);
+                        List<Address> list = null;
+                        try {
+                            list = gc.getFromLocation(latLng.latitude, latLng.longitude,1);
+                        } catch (IOException e){
+                            e.printStackTrace();
+                            return;
+                        }
+                        Address add = list.get(0);
+                        MainActivity.this.addMarker(add,latLng.latitude,latLng.longitude);
+                    }
+                });
+
+                mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                    @Override
+                    public boolean onMarkerClick(Marker marker) {
+                        String msg = marker.getTitle() +", "+
+                                marker.getPosition().latitude+", "+
+                                marker.getPosition().longitude+")";
+                        Toast.makeText(MainActivity.this,msg,Toast.LENGTH_SHORT).show();
+                        return false;
+                    }
+                });
             }
 
         }
@@ -273,5 +305,41 @@ public class MainActivity extends AppCompatActivity
         LocationServices.FusedLocationApi.removeLocationUpdates(
                 mLocationClient,mListener
         );
+    }
+
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    public Action getIndexApiAction() {
+        Thing object = new Thing.Builder()
+                .setName("Main Page") // TODO: Define a title for the content shown.
+                // TODO: Make sure this auto-generated URL is correct.
+                .setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
+                .build();
+        return new Action.Builder(Action.TYPE_VIEW)
+                .setObject(object)
+                .setActionStatus(Action.STATUS_TYPE_COMPLETED)
+                .build();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        mLocationClient.connect();
+        AppIndex.AppIndexApi.start(mLocationClient, getIndexApiAction());
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        AppIndex.AppIndexApi.end(mLocationClient, getIndexApiAction());
+        mLocationClient.disconnect();
     }
 }
