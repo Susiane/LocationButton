@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">LocationButton</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="location_label">Location:</string>
+    <string name="normal">Normal</string>
+    <string name="satellite">Satellite</string>
+    <string name="terrain">Terrain</string>
+    <string name="hybrid">Hybrid</string>
+    <string name="none">None</string>
+    <string name="current_location">Current Location</string>
+</resources>
