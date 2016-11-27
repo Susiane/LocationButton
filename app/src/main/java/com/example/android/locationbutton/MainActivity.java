@@ -25,7 +25,10 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
 import java.util.List;
@@ -46,6 +49,7 @@ public class MainActivity extends AppCompatActivity
 
     private GoogleApiClient mLocationClient;
     private LocationListener mListener; //do pacote gms
+    private Marker marker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,6 +98,32 @@ public class MainActivity extends AppCompatActivity
                     (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
             mMap = mapFragment.getMap();
 
+            if(mMap != null){
+                mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+                    @Override
+                    public View getInfoWindow(Marker marker) {
+                        return null;
+                    }
+
+                    @Override
+                    public View getInfoContents(Marker marker) {
+                        View v = getLayoutInflater().inflate(R.layout.info_window, null);
+                        TextView tvLocality = (TextView) v.findViewById(R.id.tvLocality);
+                        TextView tvLat = (TextView) v.findViewById(R.id.tvLat);
+                        TextView tvLng = (TextView) v.findViewById(R.id.tvLng);
+                        TextView tvSnippet = (TextView) v.findViewById(R.id.tvSnippet);
+
+                        LatLng latLng = marker.getPosition();
+                        tvLocality.setText(marker.getTitle());
+                        tvLat.setText("Latitude: "+latLng.latitude);
+                        tvLng.setText("Longitude: "+latLng.longitude);
+                        tvSnippet.setText(marker.getSnippet());
+                        return v;
+                    }
+                });
+
+            }
+
         }
         return(mMap != null);
     }
@@ -122,7 +152,25 @@ public class MainActivity extends AppCompatActivity
             double lat = add.getLatitude();
             double lng = add.getLongitude();
             gotoLocation(lat, lng, 15);
+
+            if(marker != null){
+                marker.remove();
+            }
+            addMarker(add, lat, lng);
         }
+
+    }
+    private void addMarker(Address add, double lat, double lng){
+        MarkerOptions options = new MarkerOptions()
+                .title(add.getLocality())
+                .position(new LatLng(lat,lng))
+                //.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_map_marker));
+        String country = add.getCountryName();
+        if(country.length()>0){
+            options.snippet(country);
+        }
+        marker = mMap.addMarker(options);
 
     }
 
@@ -188,7 +236,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Toast.makeText(this, "Ready to map!",Toast.LENGTH_SHORT).show();
-
+        /*
         mListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
@@ -205,7 +253,7 @@ public class MainActivity extends AppCompatActivity
         request.setFastestInterval(1000);
         LocationServices.FusedLocationApi.requestLocationUpdates(
                 mLocationClient,request,mListener
-        );
+        );*/
 
     }
 
